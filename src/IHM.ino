@@ -1,28 +1,62 @@
+/* 
+Autor: Daniel Barbosa
+Programa: Interface Homem Máquina 
+Descrição: Este código implementa um sistema 
+de controle de iluminação com menu interativo 
+em um display LCD via I2C.
+Ele permite selecionar entre dois LEDs, ligar/desligar cada um e 
+ajustar seus níveis de intensidade (PWM) usando cinco botões 
+de navegação.
+Data: 29/04/2026
+Versão: 2.0
+*/
+
+// BIBLIOTECAS
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 
-LiquidCrystal_I2C lcd(0x20, 16, 2);
+// CONSTANTES
+const char PIN_BOTAO_UP = 13;
+const char PIN_BOTAO_DOWN = 12;
+const char PIN_BOTAO_LEFT = 11;
+const char PIN_BOTAO_RIGHT = 10;
+const char PIN_BOTAO_SELECT = 9;
+const char PIN_LED_A = 6;
+const char PIN_LED_B = 5;
 
-//*******CONSTANTES**********
-const char pinBotaoUP = 13;
-const char pinBotaoDOWN = 12;
-const char pinBotaoLEFT = 11;
-const char pinBotaoRIGHT = 10;
-const char pinBotaoSELECT = 9;
+// VARIÁVEIS GLOBAIS
+bool posicaoSeletor = 0;
+bool atualizaSaidas = 0;
+bool estadoLedA = 0;
+bool estadoLedB = 0;
+int intensidadeLedA = 10;
+int intensidadeLedB = 10;
 
-const char pinLedA = 6;
-const char pinLedB = 5;
+
+// PROTÓTIPOS DAS FUNÇÕES
+void verificarBotaoUP();
+void verificarBotaoDOWN();
+void verificarBotaoLEFT();
+void verificarBotaoRIGHT();
+void verificarBotaoSELECT();
+void atualizarDisplay();
+void configurarLed();
+bool detectarCliques(bool, bool);
+
+// OBJETOS
+LiquidCrystal_I2C lcd (0x20, 16, 2);
 
 void setup()
 {
-  pinMode(pinBotaoUP, INPUT_PULLUP);
-  pinMode(pinBotaoDOWN, INPUT_PULLUP);
-  pinMode(pinBotaoLEFT, INPUT_PULLUP);
-  pinMode(pinBotaoRIGHT, INPUT_PULLUP);
-  pinMode(pinBotaoSELECT, INPUT_PULLUP);
+  Serial.begin(9600);
+  pinMode(PIN_BOTAO_UP,INPUT_PULLUP);
+  pinMode(PIN_BOTAO_DOWN,INPUT_PULLUP);
+  pinMode(PIN_BOTAO_LEFT,INPUT_PULLUP);
+  pinMode(PIN_BOTAO_RIGHT,INPUT_PULLUP);
+  pinMode(PIN_BOTAO_SELECT,INPUT_PULLUP);
 
-  pinMode(pinLedA, OUTPUT);
-  pinMode(pinLedB, OUTPUT);
+  pinMode(PIN_LED_A, OUTPUT);
+  pinMode(PIN_LED_B, OUTPUT);
 
   lcd.init();
   lcd.backlight();
@@ -32,154 +66,172 @@ void setup()
 }
 
 void loop()
+{ 
+  verificarBotaoUP();
+  verificarBotaoDOWN();
+  verificarBotaoLEFT();
+  verificarBotaoRIGHT();
+  verificarBotaoSELECT();
+}
+
+bool detectarCliques(bool estadoAtualPinBotao, bool estadoAnteriorPinBotao)
 {
+  if(!estadoAtualPinBotao && estadoAnteriorPinBotao) return true;
+  else return false;
+}
 
-  //******* LEITURA DOS BOTOES ********
-  bool estadoAtualBotaoUP = digitalRead(pinBotaoUP);
-  bool estadoAtualBotaoDOWN = digitalRead(pinBotaoDOWN);
-  bool estadoAtualBotaoLEFT = digitalRead(pinBotaoLEFT);
-  bool estadoAtualBotaoRIGHT = digitalRead(pinBotaoRIGHT);
-  bool estadoAtualBotaoSELECT = digitalRead(pinBotaoSELECT);
+// BOTAO UP
+void verificarBotaoUP()
+{
+  bool estadoAtualBotaoUP = digitalRead(PIN_BOTAO_UP);
+  static bool estadoAnteriorBotaoUP = 1;
 
-  static bool estadoAnteriorBotaoUP = true;
-  static bool estadoAnteriorBotaoDOWN = true;
-  static bool estadoAnteriorBotaoLEFT = true;
-  static bool estadoAnteriorBotaoRIGHT = true;
-  static bool estadoAnteriorBotaoSELECT = true;
-
-  static bool posicaoSeletor = 0;
-
-  static bool estadoLedA = 0;
-  static bool estadoLedB = 0;
-  static int intensidadeLedA = 10;
-  static int intensidadeLedB = 10;
-
-  static bool atualizaSaidas = 0;
-
-  //******* CONTROLE DOS BOTOES **********
-
-  // BOTAO UP
-  if (!estadoAtualBotaoUP && estadoAnteriorBotaoUP)
+  if(detectarCliques(estadoAtualBotaoUP, estadoAnteriorBotaoUP))
   {
     posicaoSeletor = 0;
     atualizaSaidas = 1;
+    atualizarDisplay();
   }
   estadoAnteriorBotaoUP = estadoAtualBotaoUP;
+}
 
-  // BOTAO DOWN
-  if (!estadoAtualBotaoDOWN && estadoAnteriorBotaoDOWN)
+//BOTAO DOWN
+void verificarBotaoDOWN()
+{
+  bool estadoAtualBotaoDOWN = digitalRead(PIN_BOTAO_DOWN);
+  static bool estadoAnteriorBotaoDOWN = 1;
+  
+  if(detectarCliques(estadoAtualBotaoDOWN, estadoAnteriorBotaoDOWN))
   {
     posicaoSeletor = 1;
     atualizaSaidas = 1;
+    atualizarDisplay();
   }
   estadoAnteriorBotaoDOWN = estadoAtualBotaoDOWN;
+}
 
-  // BOTAO LEFT
-  if (!estadoAtualBotaoLEFT && estadoAnteriorBotaoLEFT)
+//BOTÃO LEFT
+void verificarBotaoLEFT()
+{
+  bool estadoAtualBotaoLEFT = digitalRead(PIN_BOTAO_LEFT);
+  static bool estadoAnteriorBotaoLEFT = 1;
+  
+  if(detectarCliques(estadoAtualBotaoLEFT, estadoAnteriorBotaoLEFT))
   {
-    if (!posicaoSeletor)
+    if(!posicaoSeletor)
     {
-      if (estadoLedA)
+      if(estadoLedA)
       {
         intensidadeLedA--;
-        if (intensidadeLedA < 0)
-          intensidadeLedA = 0;
+        if(intensidadeLedA < 0) intensidadeLedA = 0; 
       }
     }
     else
     {
-      if (estadoLedB)
+      if(estadoLedB)
       {
         intensidadeLedB--;
-        if (intensidadeLedB < 0)
-          intensidadeLedB = 0;
+        if(intensidadeLedB < 0) intensidadeLedB = 0;
       }
     }
     atualizaSaidas = 1;
+    atualizarDisplay();
+    configurarLed();
   }
   estadoAnteriorBotaoLEFT = estadoAtualBotaoLEFT;
+}
 
-  // BOTAO RIGHT
-
-  if (!estadoAtualBotaoRIGHT && estadoAnteriorBotaoRIGHT)
+//BOTÃO RIGHT
+void verificarBotaoRIGHT()
+{
+  bool estadoAtualBotaoRIGHT = digitalRead(PIN_BOTAO_RIGHT);
+  static bool estadoAnteriorBotaoRIGHT = 1;
+  
+  if(detectarCliques(estadoAtualBotaoRIGHT, estadoAnteriorBotaoRIGHT))
   {
-
-    if (!posicaoSeletor)
+    if(!posicaoSeletor)
     {
-      if (estadoLedA)
+      if(estadoLedA)
       {
         intensidadeLedA++;
-        if (intensidadeLedA > 10)
-          intensidadeLedA = 10;
+        if(intensidadeLedA > 10) intensidadeLedA = 10; 
       }
     }
     else
     {
-      if (estadoLedB)
+      if(estadoLedB)
       {
         intensidadeLedB++;
-        if (intensidadeLedB > 10)
-          intensidadeLedB = 10;
+        if(intensidadeLedB > 10) intensidadeLedB = 10;
       }
     }
-
     atualizaSaidas = 1;
+    atualizarDisplay();
+    configurarLed();
   }
   estadoAnteriorBotaoRIGHT = estadoAtualBotaoRIGHT;
+}
 
-  // BOTAO SELECT
-  if (!estadoAtualBotaoSELECT && estadoAnteriorBotaoSELECT)
-  {
-
-    if (posicaoSeletor == 0)
-      estadoLedA = !estadoLedA;
+// BOTAO SELECT
+void verificarBotaoSELECT()
+{
+  bool estadoAtualBotaoSELECT = digitalRead(PIN_BOTAO_SELECT);
+  static bool estadoAnteriorBotaoSELECT = 1;
+  
+  if(detectarCliques(estadoAtualBotaoSELECT, estadoAnteriorBotaoSELECT))
+  {	
+    if(!posicaoSeletor)
+    {
+      intensidadeLedA = 10;
+	  estadoLedA = !estadoLedA;
+    }
     else
+    {  
+      intensidadeLedB = 10;
       estadoLedB = !estadoLedB;
+    }
+    
     atualizaSaidas = 1;
+    atualizarDisplay();
+    configurarLed();
   }
   estadoAnteriorBotaoSELECT = estadoAtualBotaoSELECT;
+}
 
-  if (atualizaSaidas)
+//DISPLAY
+void atualizarDisplay()
+{
+  lcd.setCursor(0, 0);
+  lcd.print(posicaoSeletor ? " " : ">");
+
+  lcd.setCursor(0,1);
+  lcd.print(posicaoSeletor ? ">" : " ");
+   
+  lcd.setCursor(8, 0); 
+  if(estadoLedA)
   {
-    //********DISPLAY*********
-    // POSICAO DAS SETAS
-    lcd.setCursor(0, 0);
-    lcd.print(posicaoSeletor ? " " : ">");
-
-    lcd.setCursor(0, 1);
-    lcd.print(posicaoSeletor ? ">" : " ");
-
-    // ESCRITA DO ON e OFF
-    lcd.setCursor(8, 0);
-    if (estadoLedA)
-    {
-      lcd.print(intensidadeLedA * 10);
-      lcd.print("  ");
-    }
-    else
-      lcd.print("OFF");
-
-    lcd.setCursor(8, 1);
-    if (estadoLedB)
-    {
-      lcd.print(intensidadeLedB * 10);
-      lcd.print("  ");
-    }
-
-    else
-      lcd.print("OFF");
-
-    // ESTADOS DOS LEDS
-    if (estadoLedA)
-      analogWrite(pinLedA, intensidadeLedA * 255 / 10);
-    else
-      digitalWrite(pinLedA, LOW);
-
-    if (estadoLedB)
-      analogWrite(pinLedB, intensidadeLedB * 255 / 10);
-    else
-      digitalWrite(pinLedB, LOW);
-
-    atualizaSaidas = 0;
+    lcd.print(intensidadeLedA * 10); 
+    lcd.print("  ");
   }
+  else
+    lcd.print("OFF"); 
+
+  	lcd.setCursor(8, 1); 
+  	if(estadoLedB)
+  	{
+      lcd.print(intensidadeLedB * 10); 
+      lcd.print("  ");
+  	}
+  	else
+  	lcd.print("OFF");
+}
+
+// LED'S
+void configurarLed()
+{ 
+  if(estadoLedA) analogWrite(PIN_LED_A, intensidadeLedA * 255 / 10);
+  else digitalWrite(PIN_LED_A, LOW);
+  
+  if(estadoLedB) analogWrite(PIN_LED_B, intensidadeLedB * 255 / 10);
+  else digitalWrite(PIN_LED_B, LOW);
 }
