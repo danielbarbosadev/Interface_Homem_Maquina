@@ -24,9 +24,6 @@ O software foi projetado seguindo o conceito de máquina de estados simples:
 
 **Lógica de Navegação:** Os botões UP e DOWN movem a seta do menu, enquanto LEFT e RIGHT alteram os valores internos de intensidade.
 
-**Atualização Inteligente:** O LCD e as saídas PWM só são atualizados quando ocorre uma mudança de estado (atualizaSaidas), evitando oscilações desnecessárias no processamento e no display.
-
-
 ## 🛠️ Tecnologias Utilizadas
 
 **C++ (Arduino SDK):** Lógica de programação estruturada com uso de variáveis static para otimização de memória e controle de estado dos botões.
