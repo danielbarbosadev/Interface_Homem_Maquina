@@ -26,7 +26,6 @@ const char PIN_LED_B = 5;
 
 // VARIÁVEIS GLOBAIS
 bool posicaoSeletor = 0;
-bool atualizaSaidas = 0;
 bool estadoLedA = 0;
 bool estadoLedB = 0;
 int intensidadeLedA = 10;
@@ -89,7 +88,6 @@ void verificarBotaoUP()
   if(detectarCliques(estadoAtualBotaoUP, estadoAnteriorBotaoUP))
   {
     posicaoSeletor = 0;
-    atualizaSaidas = 1;
     atualizarDisplay();
   }
   estadoAnteriorBotaoUP = estadoAtualBotaoUP;
@@ -104,7 +102,6 @@ void verificarBotaoDOWN()
   if(detectarCliques(estadoAtualBotaoDOWN, estadoAnteriorBotaoDOWN))
   {
     posicaoSeletor = 1;
-    atualizaSaidas = 1;
     atualizarDisplay();
   }
   estadoAnteriorBotaoDOWN = estadoAtualBotaoDOWN;
@@ -134,7 +131,6 @@ void verificarBotaoLEFT()
         if(intensidadeLedB < 0) intensidadeLedB = 0;
       }
     }
-    atualizaSaidas = 1;
     atualizarDisplay();
     configurarLed();
   }
@@ -165,7 +161,6 @@ void verificarBotaoRIGHT()
         if(intensidadeLedB > 10) intensidadeLedB = 10;
       }
     }
-    atualizaSaidas = 1;
     atualizarDisplay();
     configurarLed();
   }
@@ -190,8 +185,6 @@ void verificarBotaoSELECT()
       intensidadeLedB = 10;
       estadoLedB = !estadoLedB;
     }
-    
-    atualizaSaidas = 1;
     atualizarDisplay();
     configurarLed();
   }
